@@ -62,6 +62,15 @@
             "CMAKE_CXX_COMPILER": "g++"
         }
     },
+    {
+        "name": "x64-freebsd-clang", "hidden": true,
+        "cacheVariables": {
+            "CMAKE_C_COMPILER": "/usr/bin/clang",
+            "CMAKE_CXX_COMPILER": "/usr/bin/clang++",
+            "CMAKE_C_COMPILER_LAUNCHER": "ccache",
+            "CMAKE_CXX_COMPILER_LAUNCHER": "ccache"
+        }
+    },
     { "name": "x64-linux-gcc-debug", "inherits": [ "base", "x64-linux-gcc", "debug" ] },
     { "name": "x64-linux-gcc-release", "inherits": [ "base", "x64-linux-gcc", "release" ] },
     { "name": "x64-linux-gcc-reldbg", "inherits": [ "base", "x64-linux-gcc", "reldbg" ] },
@@ -90,6 +99,10 @@
     { "name": "x64-windows-sycl-release-f16", "inherits": [ "sycl-base", "release", "sycl_f16" ] },
 
     { "name": "x64-windows-vulkan-debug", "inherits": [ "base", "vulkan", "debug" ] },
-    { "name": "x64-windows-vulkan-release", "inherits": [ "base", "vulkan", "release" ] }
+    { "name": "x64-windows-vulkan-release", "inherits": [ "base", "vulkan", "release" ] },
+
+    { "name": "x64-freebsd-clang-debug", "inherits": [ "base", "x64-freebsd-clang", "debug" ] },
+    { "name": "x64-freebsd-clang-release", "inherits": [ "base", "x64-freebsd-clang", "release" ] }
+
   ]
 }
