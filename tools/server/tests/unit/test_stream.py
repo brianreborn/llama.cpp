@@ -23,7 +23,9 @@ def create_server():
 
 def test_stream_resume_and_stop_with_slashed_model_name():
     global server
+    server.api_key = "sk-router-secret"
     server.start()
+    auth_headers = {"Authorization": f"Bearer {server.api_key}"}
 
     content = ""
     for data in server.make_stream_request("POST", "/chat/completions", data={
@@ -31,20 +33,29 @@ def test_stream_resume_and_stop_with_slashed_model_name():
         "stream": True,
         "max_tokens": 16,
         "messages": [{"role": "user", "content": "hello"}],
-    }, headers={"X-Conversation-Id": STREAM_ID}):
+    }, headers={**auth_headers, "X-Conversation-Id": STREAM_ID}):
         if data["choices"]:
             content += data["choices"][0]["delta"].get("content") or ""
     assert len(content) > 0
 
+    lookup = server.make_request(
+        "POST",
+        "/v1/streams/lookup",
+        data={"conversation_ids": [STREAM_ID]},
+        headers=auth_headers,
+    )
+    assert lookup.status_code == 200
+    assert any(item["conversation_id"] == STREAM_ID for item in lookup.body)
+
     # the finished session replays from the beginning through the router
-    res = server.make_request("GET", f"/v1/stream?{QS}&from=0")
+    res = server.make_request("GET", f"/v1/stream?{QS}&from=0", headers=auth_headers)
     assert res.status_code == 200
     assert "data: " in str(res.body)
 
     # the explicit stop reaches the owning child and evicts the session
-    res = server.make_request("DELETE", f"/v1/stream?{QS}")
+    res = server.make_request("DELETE", f"/v1/stream?{QS}", headers=auth_headers)
     assert res.status_code == 204
-    res = server.make_request("GET", f"/v1/stream?{QS}&from=0")
+    res = server.make_request("GET", f"/v1/stream?{QS}&from=0", headers=auth_headers)
     assert res.status_code == 404
 
 
