@@ -13,6 +13,33 @@
 #include <thread>
 #include <vector>
 #include <algorithm>
+#include <string>
+
+#if defined(_WIN32)
+#include <process.h>
+#define LLAMA_LOG_GETPID _getpid
+#else
+#include <unistd.h>
+#define LLAMA_LOG_GETPID getpid
+#endif
+
+// LLAMA_LOG_PID=1: start every log line with "[pid]" or "[pid tag]" (tag = LLAMA_LOG_TAG,
+// set by the router for its children to "<model>:<port>"), so interleaved logs show who wrote them
+static const std::string & log_pid_prefix() {
+    static const std::string p = [] {
+        const char * on = getenv("LLAMA_LOG_PID");
+        if (!on || !*on || strcmp(on, "0") == 0) {
+            return std::string();
+        }
+        const char * tag = getenv("LLAMA_LOG_TAG");
+        std::string r = "[" + std::to_string((long) LLAMA_LOG_GETPID());
+        if (tag && *tag) {
+            r += std::string(" ") + tag;
+        }
+        return r + "] ";
+    }();
+    return p;
+}
 
 int common_log_verbosity_thold = LOG_DEFAULT_LLAMA;
 
@@ -120,6 +147,10 @@ struct common_log_entry {
             fprintf(fcur, "%s\n", obj.dump_safe().c_str());
             fflush(fcur);
             return;
+        }
+
+        if (level != GGML_LOG_LEVEL_CONT && !log_pid_prefix().empty()) {
+            fputs(log_pid_prefix().c_str(), fcur);
         }
 
         if (level != GGML_LOG_LEVEL_NONE && level != GGML_LOG_LEVEL_CONT && prefix) {
